@@ -3,13 +3,32 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:gravity="center"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:padding="20dp">
 
     <Button
         android:id="@+id/btnSelecionarAudio"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Selecionar Áudio" />
+        android:text="Áudio do carregador"/>
+
+    <Button
+        android:id="@+id/btnSelecionarAudioBateria"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Áudio da bateria cheia"/>
+
+    <EditText
+        android:id="@+id/edtPorcentagem"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Porcentagem (95)"
+        android:inputType="number"/>
+
+    <Button
+        android:id="@+id/btnSalvarPorcentagem"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Salvar porcentagem"/>
 
 </LinearLayout>

@@ -14,6 +14,7 @@ import androidx.core.app.NotificationCompat;
 public class ChargingService extends Service {
 
     private ChargingReceiver receiver;
+    private BatteryLevelReceiver batteryReceiver;
 
     @Override
     public void onCreate() {
@@ -22,20 +23,37 @@ public class ChargingService extends Service {
         createNotificationChannel();
 
         Notification notification =
-                new NotificationCompat.Builder(this, "charging_channel")
+                new NotificationCompat.Builder(
+                        this,
+                        "charging_channel")
                         .setContentTitle("Monitoramento ativo")
-                        .setContentText("Aguardando carregador")
-                        .setSmallIcon(android.R.drawable.ic_lock_idle_charging)
+                        .setContentText("Monitorando bateria e carregador")
+                        .setSmallIcon(
+                                android.R.drawable.ic_lock_idle_charging)
                         .build();
 
         startForeground(1, notification);
 
+        // Receiver do carregador
         receiver = new ChargingReceiver();
 
-        IntentFilter filter =
-                new IntentFilter(Intent.ACTION_POWER_CONNECTED);
+        registerReceiver(
+                receiver,
+                new IntentFilter(
+                        Intent.ACTION_POWER_CONNECTED
+                )
+        );
 
-        registerReceiver(receiver, filter);
+        // Receiver da bateria
+        batteryReceiver =
+                new BatteryLevelReceiver();
+
+        registerReceiver(
+                batteryReceiver,
+                new IntentFilter(
+                        Intent.ACTION_BATTERY_CHANGED
+                )
+        );
     }
 
     private void createNotificationChannel() {
@@ -61,6 +79,10 @@ public class ChargingService extends Service {
 
         if (receiver != null) {
             unregisterReceiver(receiver);
+        }
+
+        if (batteryReceiver != null) {
+            unregisterReceiver(batteryReceiver);
         }
 
         super.onDestroy();
