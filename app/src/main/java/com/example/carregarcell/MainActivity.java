@@ -1,12 +1,15 @@
 package com.example.carregarcell;
 
+
+import android.view.WindowManager;
+import androidx.appcompat.app.AppCompatActivity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.widget.Button;
-import android.widget.EditText;
+import android.widget.SeekBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -17,7 +20,8 @@ public class MainActivity extends AppCompatActivity {
     private static final int PICK_CHARGER_AUDIO = 100;
     private static final int PICK_BATTERY_AUDIO = 200;
 
-    private boolean escolhendoAudioBateria = false;
+    private TextView txtPercentual;
+    private SeekBar seekBattery;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,100 +29,112 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Button btnCarregador =
-                findViewById(R.id.btnSelecionarAudio);
-
-        Button btnBateria =
-                findViewById(R.id.btnSelecionarAudioBateria);
-
-        Button btnSalvar =
-                findViewById(R.id.btnSalvarPorcentagem);
-
-        EditText edtPorcentagem =
-                findViewById(R.id.edtPorcentagem);
-
         SharedPreferences prefs =
                 getSharedPreferences(
                         "config",
                         MODE_PRIVATE
                 );
 
-        edtPorcentagem.setText(
-                String.valueOf(
-                        prefs.getInt(
-                                "battery_limit",
-                                95
-                        )
-                )
+        txtPercentual =
+                findViewById(R.id.txtPercentual);
+
+        seekBattery =
+                findViewById(R.id.seekBattery);
+
+        int limiteSalvo =
+                prefs.getInt(
+                        "battery_limit",
+                        95
+                );
+
+        txtPercentual.setText(
+                limiteSalvo + "%"
         );
 
-        btnCarregador.setOnClickListener(v -> {
+        seekBattery.setProgress(
+                limiteSalvo
+        );
 
-            escolhendoAudioBateria = false;
+        seekBattery.setOnSeekBarChangeListener(
+                new SeekBar.OnSeekBarChangeListener() {
 
-            Intent intent =
-                    new Intent(
-                            Intent.ACTION_OPEN_DOCUMENT
-                    );
+                    @Override
+                    public void onProgressChanged(
+                            SeekBar seekBar,
+                            int progress,
+                            boolean fromUser) {
 
-            intent.setType("audio/*");
-
-            startActivityForResult(
-                    intent,
-                    PICK_CHARGER_AUDIO
-            );
-        });
-
-        btnBateria.setOnClickListener(v -> {
-
-            escolhendoAudioBateria = true;
-
-            Intent intent =
-                    new Intent(
-                            Intent.ACTION_OPEN_DOCUMENT
-                    );
-
-            intent.setType("audio/*");
-
-            startActivityForResult(
-                    intent,
-                    PICK_BATTERY_AUDIO
-            );
-        });
-
-        btnSalvar.setOnClickListener(v -> {
-
-            try {
-
-                int valor =
-                        Integer.parseInt(
-                                edtPorcentagem
-                                        .getText()
-                                        .toString()
+                        txtPercentual.setText(
+                                progress + "%"
                         );
+                    }
 
-                prefs.edit()
-                        .putInt(
-                                "battery_limit",
-                                valor
-                        )
-                        .apply();
+                    @Override
+                    public void onStartTrackingTouch(
+                            SeekBar seekBar) {
+                    }
 
-                Toast.makeText(
-                        this,
-                        "Porcentagem salva",
-                        Toast.LENGTH_SHORT
-                ).show();
+                    @Override
+                    public void onStopTrackingTouch(
+                            SeekBar seekBar) {
 
-            } catch (Exception e) {
+                        prefs.edit()
+                                .putInt(
+                                        "battery_limit",
+                                        seekBar.getProgress()
+                                )
+                                .apply();
 
-                Toast.makeText(
-                        this,
-                        "Valor inválido",
-                        Toast.LENGTH_SHORT
-                ).show();
-            }
-        });
+                        Toast.makeText(
+                                MainActivity.this,
+                                "Limite salvo em "
+                                        + seekBar.getProgress()
+                                        + "%",
+                                Toast.LENGTH_SHORT
+                        ).show();
+                    }
+                }
+        );
+
+        findViewById(R.id.btnSelecionarAudio)
+                .setOnClickListener(v -> {
+
+                    Intent intent =
+                            new Intent(
+                                    Intent.ACTION_OPEN_DOCUMENT
+                            );
+
+                    intent.addCategory(
+                            Intent.CATEGORY_OPENABLE
+                    );
+
+                    intent.setType("audio/*");
+
+                    startActivityForResult(
+                            intent,
+                            PICK_CHARGER_AUDIO
+                    );
+                });
+
+        findViewById(R.id.btnSelecionarAudioBateria)
+                .setOnClickListener(v -> {
+
+                    Intent intent =
+                            new Intent(
+                                    Intent.ACTION_OPEN_DOCUMENT
+                            );
+
+                    intent.addCategory(
+                            Intent.CATEGORY_OPENABLE
+                    );
+
+                    intent.setType("audio/*");
+
+                    startActivityForResult(
+                            intent,
+                            PICK_BATTERY_AUDIO
+                    );
+                });
 
         Intent serviceIntent =
                 new Intent(
@@ -127,9 +143,13 @@ public class MainActivity extends AppCompatActivity {
                 );
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(serviceIntent);
+            startForegroundService(
+                    serviceIntent
+            );
         } else {
-            startService(serviceIntent);
+            startService(
+                    serviceIntent
+            );
         }
     }
 
@@ -150,17 +170,23 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        Uri audioUri = data.getData();
+        Uri audioUri =
+                data.getData();
 
         if (audioUri == null) {
             return;
         }
 
-        getContentResolver()
-                .takePersistableUriPermission(
-                        audioUri,
-                        Intent.FLAG_GRANT_READ_URI_PERMISSION
-                );
+        try {
+
+            getContentResolver()
+                    .takePersistableUriPermission(
+                            audioUri,
+                            Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    );
+
+        } catch (Exception ignored) {
+        }
 
         SharedPreferences prefs =
                 getSharedPreferences(
@@ -168,7 +194,8 @@ public class MainActivity extends AppCompatActivity {
                         MODE_PRIVATE
                 );
 
-        if (requestCode == PICK_CHARGER_AUDIO) {
+        if (requestCode ==
+                PICK_CHARGER_AUDIO) {
 
             prefs.edit()
                     .putString(
@@ -184,7 +211,8 @@ public class MainActivity extends AppCompatActivity {
             ).show();
         }
 
-        if (requestCode == PICK_BATTERY_AUDIO) {
+        if (requestCode ==
+                PICK_BATTERY_AUDIO) {
 
             prefs.edit()
                     .putString(
