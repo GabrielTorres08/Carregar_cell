@@ -1,3 +1,5 @@
+O app está dentro da pasta apk/
+
 # Como o app funciona?
 
 1. Baixe um áudio(.mp3)
